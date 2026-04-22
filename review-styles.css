@@ -547,6 +547,7 @@ textarea {
 .actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 #draft-preview {
@@ -699,6 +700,24 @@ textarea {
 
 #status[data-kind="success"] {
   color: var(--status-success);
+}
+
+.post-submit-actions {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--surface-primary);
+}
+
+.post-submit-actions h4,
+.post-submit-actions p {
+  margin: 0;
+}
+
+.post-submit-actions p {
+  color: var(--text-secondary);
 }
 
 @media (max-width: 960px) {

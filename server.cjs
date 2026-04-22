@@ -286,11 +286,22 @@ function readBody(req, limit) {
 	});
 }
 
-function sendSubmitResponse(res, statusCode, payload) {
-	res.once("finish", closeSubmissionServer);
-	res.once("close", closeSubmissionServer);
+function sendJsonResponse(res, statusCode, payload) {
 	res.writeHead(statusCode, { "content-type": "application/json" });
 	res.end(JSON.stringify(payload));
+}
+
+function scheduleServerShutdown(res) {
+	let scheduled = false;
+	const shutdown = () => {
+		if (scheduled) return;
+		scheduled = true;
+		closeSubmissionServer();
+		setImmediate(() => process.exit(0));
+	};
+
+	res.once("finish", shutdown);
+	res.once("close", shutdown);
 }
 
 const server = http.createServer(async (req, res) => {
@@ -321,20 +332,20 @@ const server = http.createServer(async (req, res) => {
 				const result = await ack;
 
 				if (result?.ok === false) {
-					sendSubmitResponse(res, 502, {
+					sendJsonResponse(res, 502, {
 						ok: false,
 						error: result.error || result.message || "review handoff failed",
 					});
 					return;
 				}
 
-				sendSubmitResponse(res, 200, {
+				sendJsonResponse(res, 200, {
 					ok: true,
 					message: result?.message || "Review delivered",
 				});
 				return;
 			} catch (error) {
-				sendSubmitResponse(res, 502, {
+				sendJsonResponse(res, 502, {
 					ok: false,
 					error:
 						error instanceof Error
@@ -343,6 +354,19 @@ const server = http.createServer(async (req, res) => {
 				});
 				return;
 			}
+		}
+
+		if (url.pathname === "/api/shutdown" && req.method === "POST") {
+			if (rejectInvalidToken(req, res)) {
+				return;
+			}
+
+			scheduleServerShutdown(res);
+			sendJsonResponse(res, 200, {
+				ok: true,
+				message: "Server stopped. You can close this tab.",
+			});
+			return;
 		}
 
 		if (url.pathname === "/health") {

@@ -38,6 +38,20 @@ function saveState(state) {
 	);
 }
 
+function resetDraftState(state, storage) {
+	state.summary = "";
+	state.comments = [];
+
+	try {
+		if (typeof storage?.removeItem === "function") {
+			storage.removeItem(state.key);
+			return;
+		}
+	} catch {}
+
+	saveState(state);
+}
+
 function isLayoutDebugEnabled(storage) {
 	try {
 		if (storage?.getItem?.("local-pr-review-server:debug-layout") === "1")
@@ -1087,6 +1101,30 @@ export async function submitReview(state, bootstrap) {
 	return payload;
 }
 
+export async function shutdownReviewServer(bootstrap) {
+	const response = await fetch("/api/shutdown", {
+		method: "POST",
+		headers: {
+			"x-review-token": bootstrap.token,
+		},
+	});
+
+	let payload = null;
+	try {
+		payload = await response.json();
+	} catch {}
+
+	if (!response.ok) {
+		throw new Error(
+			payload?.error ||
+				payload?.message ||
+				`shutdown failed (${response.status})`,
+		);
+	}
+
+	return payload;
+}
+
 function renderApp(bootstrap) {
 	lineDragCleanup?.abort();
 	lineDragCleanup = new AbortController();
@@ -1231,26 +1269,115 @@ function renderApp(bootstrap) {
 	const submit = document.createElement("button");
 	submit.type = "button";
 	submit.textContent = "Submit review";
+
+	const status = document.createElement("p");
+	status.id = "status";
+	status.setAttribute("role", "status");
+	status.setAttribute("aria-live", "polite");
+
+	const postSubmitActions = document.createElement("section");
+	postSubmitActions.className = "post-submit-actions";
+	postSubmitActions.hidden = true;
+
+	const postSubmitHeading = document.createElement("h4");
+	postSubmitHeading.textContent = "What would you like to do now?";
+
+	const postSubmitText = document.createElement("p");
+	postSubmitText.textContent =
+		"Keep editing, reset the draft to start a fresh review, or stop the local server.";
+
+	const postSubmitButtons = document.createElement("div");
+	postSubmitButtons.className = "actions";
+
+	const keepEditing = document.createElement("button");
+	keepEditing.type = "button";
+	keepEditing.textContent = "Keep editing";
+
+	const resetDraft = document.createElement("button");
+	resetDraft.type = "button";
+	resetDraft.textContent = "Reset draft";
+
+	const closeServer = document.createElement("button");
+	closeServer.type = "button";
+	closeServer.textContent = "Close server";
+
+	function setPostSubmitActionsVisible(visible) {
+		postSubmitActions.hidden = !visible;
+	}
+
+	function setPostSubmitButtonsDisabled(disabled) {
+		keepEditing.disabled = disabled;
+		resetDraft.disabled = disabled;
+		closeServer.disabled = disabled;
+	}
+
+	keepEditing.addEventListener("click", () => {
+		setPostSubmitActionsVisible(false);
+		setStatus(
+			"Review delivered. Keep editing or submit another review when ready.",
+			"success",
+		);
+	});
+
+	resetDraft.addEventListener("click", () => {
+		setPostSubmitActionsVisible(false);
+		resetDraftState(state, storage);
+		app.composer = null;
+		app.dragSelection = null;
+		summaryInput.value = "";
+		app.refreshComments?.();
+		setStatus("Draft reset. You can start another review.", "success");
+		submit.disabled = false;
+		summaryInput.focus();
+	});
+
+	closeServer.addEventListener("click", async () => {
+		setPostSubmitButtonsDisabled(true);
+		setStatus("Stopping server…");
+		try {
+			const result = await shutdownReviewServer(bootstrap);
+			setPostSubmitActionsVisible(false);
+			submit.disabled = true;
+			setStatus(
+				result?.message || "Server stopped. You can close this tab.",
+				"success",
+			);
+		} catch (error) {
+			setPostSubmitButtonsDisabled(false);
+			setStatus(
+				error instanceof Error ? error.message : "Failed to close server",
+				"error",
+			);
+		}
+	});
+
 	submit.addEventListener("click", async () => {
 		submit.disabled = true;
+		setPostSubmitActionsVisible(false);
 		setStatus("Submitting review…");
 		try {
 			const result = await submitReview(state, bootstrap);
+			setPostSubmitButtonsDisabled(false);
+			setPostSubmitActionsVisible(true);
 			setStatus(result?.message || "Review delivered", "success");
 		} catch (error) {
 			setStatus(
 				error instanceof Error ? error.message : "Failed to submit review",
 				"error",
 			);
+		} finally {
 			submit.disabled = false;
 		}
 	});
 
-	const status = document.createElement("p");
-	status.id = "status";
-
 	const { draftPreviewSection } = createDraftPreviewDisclosure(document);
 
+	postSubmitButtons.append(keepEditing, resetDraft, closeServer);
+	postSubmitActions.append(
+		postSubmitHeading,
+		postSubmitText,
+		postSubmitButtons,
+	);
 	actions.append(submit);
 	draftBody.append(
 		summaryLabel,
@@ -1258,6 +1385,7 @@ function renderApp(bootstrap) {
 		draftComments,
 		actions,
 		status,
+		postSubmitActions,
 		draftPreviewSection,
 	);
 	draftEditor.append(draftHeader, draftBody);

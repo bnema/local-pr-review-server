@@ -2,7 +2,7 @@
 
 Agent-agnostic local PR review web server and browser UI.
 
-It serves a Git diff review interface over localhost and hands submitted reviews back to the launcher over stdio.
+It serves a Git diff review interface over localhost and hands submitted reviews back to the launcher over stdio. After a successful submission, the UI can keep editing, reset the draft for another pass, or shut the server down explicitly.
 
 ## Launcher contract
 
