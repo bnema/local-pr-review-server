@@ -21,7 +21,3 @@ Stdout events:
 Stdin acknowledgements:
 
 - `review-ack` — `{ type: "review-ack", requestId, ok, message? , error? }`
-
-## Purpose
-
-Use this package as the shared review server/UI for agent-specific adapters such as pi, OpenCode, Codex, or Cloud Code.
