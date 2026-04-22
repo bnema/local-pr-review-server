@@ -16,16 +16,27 @@
     "*.cjs",
     "*.css",
     "*.html",
+    "*.d.ts",
     "LICENSE",
     "README.md"
   ],
+  "typesVersions": {
+    "*": {
+      "review-prompt.js": [
+        "./review-prompt.d.ts"
+      ]
+    }
+  },
   "exports": {
     "./server.cjs": "./server.cjs",
     "./review-client.js": "./review-client.js",
     "./review-comments.js": "./review-comments.js",
     "./review-draft-panel.js": "./review-draft-panel.js",
     "./review-file-tree.js": "./review-file-tree.js",
-    "./review-prompt.js": "./review-prompt.js",
+    "./review-prompt.js": {
+      "types": "./review-prompt.d.ts",
+      "default": "./review-prompt.js"
+    },
     "./review-selection.js": "./review-selection.js",
     "./review-styles.css": "./review-styles.css",
     "./review-template.html": "./review-template.html",
