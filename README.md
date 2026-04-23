@@ -20,14 +20,16 @@ This repo is also the installable pi package for manual local-review commands.
 Install globally:
 
 ```bash
-pi install git:github.com/bnema/local-pr-review-server@<release-tag>
+pi install git:github.com/bnema/local-pr-review-server
 ```
 
 Install for the current project only:
 
 ```bash
-pi install -l git:github.com/bnema/local-pr-review-server@<release-tag>
+pi install -l git:github.com/bnema/local-pr-review-server
 ```
+
+Leaving off `@<ref>` keeps the package unpinned, so `pi update` can pull newer versions. If you want to lock to a specific release, install `git:github.com/bnema/local-pr-review-server@vX.Y.Z` instead.
 
 After installation, pi gets these commands:
 
