@@ -1,10 +1,21 @@
 {
   "name": "local-pr-review-server",
-  "version": "0.1.0",
-  "description": "Agent-agnostic local PR review web server and UI",
+  "version": "0.2.0-rc.1",
+  "description": "Shared local PR review server, browser UI, and OpenCode/Pi adapters",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://github.com/bnema/local-pr-review-server",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bnema/local-pr-review-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bnema/local-pr-review-server/issues"
+  },
   "keywords": [
+    "pi-package",
+    "pi",
+    "opencode",
     "review",
     "pull-request",
     "browser",
@@ -17,29 +28,76 @@
     "*.css",
     "*.html",
     "*.d.ts",
+    "extensions",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "RELEASING.md"
   ],
   "typesVersions": {
     "*": {
+      "client-shared.js": [
+        "./client-shared.d.ts"
+      ],
+      "opencode.js": [
+        "./opencode.d.ts"
+      ],
+      "pi.js": [
+        "./pi.d.ts"
+      ],
       "review-prompt.js": [
         "./review-prompt.d.ts"
       ]
     }
   },
+  "pi": {
+    "extensions": [
+      "./extensions/index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-ai": "*",
+    "@mariozechner/pi-coding-agent": "*",
+    "@sinclair/typebox": "*"
+  },
+  "peerDependenciesMeta": {
+    "@mariozechner/pi-ai": {
+      "optional": true
+    },
+    "@mariozechner/pi-coding-agent": {
+      "optional": true
+    },
+    "@sinclair/typebox": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@mariozechner/pi-ai": "*",
+    "@mariozechner/pi-coding-agent": "*",
+    "@sinclair/typebox": "*",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  },
+  "scripts": {
+    "test": "node --test adapters.test.js",
+    "typecheck": "tsc --noEmit"
+  },
   "exports": {
     "./server.cjs": "./server.cjs",
-    "./review-client.js": "./review-client.js",
-    "./review-comments.js": "./review-comments.js",
-    "./review-draft-panel.js": "./review-draft-panel.js",
-    "./review-file-tree.js": "./review-file-tree.js",
+    "./client-shared.js": {
+      "types": "./client-shared.d.ts",
+      "default": "./client-shared.js"
+    },
+    "./opencode.js": {
+      "types": "./opencode.d.ts",
+      "default": "./opencode.js"
+    },
+    "./pi.js": {
+      "types": "./pi.d.ts",
+      "default": "./pi.js"
+    },
     "./review-prompt.js": {
       "types": "./review-prompt.d.ts",
       "default": "./review-prompt.js"
-    },
-    "./review-selection.js": "./review-selection.js",
-    "./review-styles.css": "./review-styles.css",
-    "./review-template.html": "./review-template.html",
-    "./review-theme.js": "./review-theme.js"
+    }
   }
 }
