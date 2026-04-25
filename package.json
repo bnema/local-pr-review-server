@@ -1,6 +1,6 @@
 {
   "name": "local-pr-review-server",
-  "version": "0.2.0-rc.1",
+  "version": "0.2.0",
   "description": "Shared local PR review server, browser UI, and OpenCode/Pi adapters",
   "license": "MIT",
   "type": "module",
