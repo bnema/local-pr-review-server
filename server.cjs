@@ -122,6 +122,42 @@ function git(args) {
 	});
 }
 
+function gitAllowExit(args, allowedStatuses) {
+	try {
+		return git(args);
+	} catch (error) {
+		if (allowedStatuses.includes(error?.status)) return error.stdout || "";
+		throw error;
+	}
+}
+
+function splitGitLines(output) {
+	return String(output || "")
+		.trim()
+		.split("\n")
+		.filter(Boolean);
+}
+
+function uniqueFiles(files) {
+	return Array.from(new Set(files));
+}
+
+function listUntrackedFiles() {
+	return splitGitLines(git(["ls-files", "--others", "--exclude-standard"]));
+}
+
+function loadUntrackedPatch(files) {
+	return files
+		.map((file) =>
+			gitAllowExit(
+				["diff", "--no-index", "--unified=3", "--", "/dev/null", file],
+				[1],
+			),
+		)
+		.filter(Boolean)
+		.join("");
+}
+
 function loadRepoRefs() {
 	const base = process.env.LOCAL_PR_REVIEW_BASE;
 	const headRef = git(["rev-parse", "--abbrev-ref", "HEAD"]).trim();
@@ -138,17 +174,17 @@ function loadRepoRefs() {
 function loadDiffSnapshot(includeFiles = true) {
 	const { base, head } = loadRepoRefs();
 	const mergeBase = git(["merge-base", base, "HEAD"]).trim();
-	const patch = git(["diff", "--unified=3", mergeBase]);
+	const trackedPatch = git(["diff", "--unified=3", mergeBase]);
+	const trackedFiles = splitGitLines(git(["diff", "--name-only", mergeBase]));
+	const untrackedFiles = listUntrackedFiles();
+	const patch = `${trackedPatch}${loadUntrackedPatch(untrackedFiles)}`;
 	const snapshot = { base, head, patch };
 
 	if (!includeFiles) return snapshot;
 
 	return {
 		...snapshot,
-		files: git(["diff", "--name-only", mergeBase])
-			.trim()
-			.split("\n")
-			.filter(Boolean),
+		files: uniqueFiles([...trackedFiles, ...untrackedFiles]),
 	};
 }
 

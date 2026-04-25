@@ -17,8 +17,8 @@
   --surface-primary: var(--bg-secondary);
   --surface-secondary: var(--bg-primary);
   --border-default: var(--border);
-  --diff-add-bg: rgba(52, 199, 89, 0.08);
-  --diff-remove-bg: rgba(255, 59, 48, 0.08);
+  --diff-add-bg: rgba(52, 199, 89, 0.06);
+  --diff-remove-bg: rgba(255, 59, 48, 0.06);
   --diff-context-bg: #fbfbfc;
   --selection-bg: rgba(0, 113, 227, 0.12);
   --selection-border: var(--selected-border);
@@ -67,8 +67,8 @@
   --surface-primary: #252527;
   --surface-secondary: var(--bg-primary);
   --border-default: var(--border);
-  --diff-add-bg: rgba(52, 199, 89, 0.12);
-  --diff-remove-bg: rgba(255, 69, 58, 0.12);
+  --diff-add-bg: rgba(52, 199, 89, 0.1);
+  --diff-remove-bg: rgba(255, 69, 58, 0.1);
   --diff-context-bg: rgba(255, 255, 255, 0.03);
   --selection-bg: rgba(10, 132, 255, 0.18);
   --selection-border: var(--selected-border);
@@ -369,6 +369,7 @@ textarea {
 }
 
 .diff-line {
+  --line-number-min-width: max(3rem, 6ch);
   display: flex;
   flex-direction: column;
   width: max-content;
@@ -376,55 +377,60 @@ textarea {
 }
 
 .diff-line__row {
+  position: relative;
   display: grid;
   width: 100%;
-  grid-template-columns: 1.5rem var(--old-line-width, 3rem) var(--new-line-width, 3rem) max-content;
-  gap: 8px;
+  grid-template-columns: minmax(var(--line-number-min-width), max-content) minmax(var(--line-number-min-width), max-content) max-content;
+  column-gap: 0;
   align-items: start;
-  padding: 3px 0;
-}
-
-.diff-line--add .diff-line__row {
-  --old-line-width: 0;
-}
-
-.diff-line--remove .diff-line__row {
-  --new-line-width: 0;
+  padding: 0.1875rem 0;
 }
 
 .diff-line__gutter {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  z-index: 1;
   width: 1.5rem;
   min-width: 1.5rem;
   height: 1.5rem;
   border-radius: 999px;
-  border: 1px solid transparent;
+  border: 0.125rem solid var(--accent-hover);
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  color: var(--text-secondary);
+  transform: translateY(-50%);
+  background: var(--accent);
+  color: #fff;
   cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.diff-line__gutter:hover {
-  background: var(--selection-bg);
-  border-color: var(--selection-border);
-}
-
-.diff-line__gutter--selected {
-  background: var(--selection-bg);
-  border-color: var(--selection-border);
-  color: var(--selection-border);
+.diff-line__row:hover button.diff-line__gutter:not(:disabled),
+button.diff-line__gutter:focus-visible,
+button.diff-line__gutter--selected {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .diff-line__gutter:disabled {
   cursor: default;
-  opacity: 0.35;
+  opacity: 0;
+}
+
+@media (hover: none) {
+  button.diff-line__gutter:not(:disabled) {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .diff-line__number {
+  box-sizing: border-box;
   color: var(--text-secondary);
+  padding: 0 0.375rem;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -494,16 +500,16 @@ textarea {
 }
 
 .diff-line__comments {
-  margin: 4px 0 12px 7.5rem;
+  margin: 0.25rem 0 0.75rem calc(var(--line-number-min-width) * 2);
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
   justify-items: start;
 }
 
 .diff-line__composer {
-  margin: 4px 0 12px 7.5rem;
+  margin: 0.25rem 0 0.75rem calc(var(--line-number-min-width) * 2);
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
   justify-items: start;
 }
 
@@ -709,6 +715,10 @@ textarea {
   border: 1px solid var(--border-default);
   border-radius: 10px;
   background: var(--surface-primary);
+}
+
+.post-submit-actions[hidden] {
+  display: none;
 }
 
 .post-submit-actions h4,
